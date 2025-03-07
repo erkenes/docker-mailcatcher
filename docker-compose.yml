@@ -1,0 +1,34 @@
+services:
+  mailcatcher:
+    image: dockage/mailcatcher:latest
+    container_name: mailcatcher
+    restart: always
+    networks:
+      - traefik
+      - mailcatcher
+    ports:
+      - '1080:1080'
+      - '1025:1025'
+    labels:
+      - 'traefik.enable=true'
+
+      # redirect to https
+      - 'traefik.http.routers.http-docker-mailcatcher.entrypoints=web'
+      - 'traefik.http.routers.http-docker-mailcatcher.rule=Host(`${MAILCATCHER_DOMAIN}`)'
+      - 'traefik.http.routers.http-docker-mailcatcher.middlewares=https-redirect-scheme@file'
+
+      - 'traefik.http.routers.docker-mailcatcher.tls=true'
+      - 'traefik.http.routers.docker-mailcatcher.entrypoints=websecure'
+      - 'traefik.http.routers.docker-mailcatcher.rule=Host(`${MAILCATCHER_DOMAIN}`)'
+      - 'traefik.http.routers.docker-mailcatcher.service=docker-mailcatcher'
+      - 'traefik.http.services.docker-mailcatcher.loadbalancer.server.port=1080'
+
+#-----------
+# Networks
+#-----------
+networks:
+  traefik:
+    name: traefik
+    external: true
+  mailcatcher:
+    name: mailcatcher
